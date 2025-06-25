@@ -8,20 +8,25 @@ class handler(BaseHTTPRequestHandler):
         try:
             # Fetch results from university website
             response = requests.get("http://14.139.56.104", timeout=10)
+            response.raise_for_status()  # Raise error for bad status
+            
             soup = BeautifulSoup(response.text, 'html.parser')
-            table = soup.find('table', {'id': 'ResultList'})
             results = []
             
-            for row in table.find_all('tr')[1:5]:  # Only first 5 results for testing
-                cols = row.find_all('td')
-                if len(cols) >= 2:
-                    link = cols[1].find('a')
-                    if link:
-                        results.append({
-                            'name': link.text.strip(),
-                            'url': link['href']
-                        })
-
+            # Find result table
+            table = soup.find('table', {'id': 'ResultList'})
+            if table:
+                # Process rows (skip header)
+                for row in table.find_all('tr')[1:6]:  # Only first 5 results
+                    cols = row.find_all('td')
+                    if len(cols) >= 2:
+                        link = cols[1].find('a')
+                        if link:
+                            results.append({
+                                'name': link.text.strip(),
+                                'url': link['href']
+                            })
+            
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
